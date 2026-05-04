@@ -12,7 +12,12 @@ func AuthRequired(firebaseAuth *auth.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Bypass auth when Firebase is not configured (local dev only).
 		if firebaseAuth == nil {
-			c.Set("uid", "dev-uid")
+			userID := c.GetHeader("X-User-ID")
+			if userID == "" {
+				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "missing X-User-ID header"})
+				return
+			}
+			c.Set("uid", userID)
 			c.Next()
 			return
 		}

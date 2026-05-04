@@ -39,9 +39,10 @@ func Register(r *gin.Engine, db *sql.DB, hub *ws.Hub, firebaseAuth *firebaseauth
 	v1.Use(middleware.AuthRequired(firebaseAuth))
 	{
 		// Friends
-		v1.POST("/friends/request", friendsHandler.SendRequest)
-		v1.PUT("/friends/request/:id", friendsHandler.RespondRequest)
+		v1.POST("/friends/invite", friendsHandler.Invite)
+		v1.POST("/friends/respond", friendsHandler.Respond)
 		v1.GET("/friends", friendsHandler.List)
+		v1.GET("/friends/pending", friendsHandler.Pending)
 
 		// Pick requests
 		v1.POST("/requests", requestsHandler.Create)
