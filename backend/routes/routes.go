@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	firebaseauth "firebase.google.com/go/v4/auth"
+	"github.com/gin-gonic/gin"
 
 	"github.com/xero7412/pick-me/backend/handlers"
 	"github.com/xero7412/pick-me/backend/middleware"
@@ -13,7 +13,7 @@ import (
 )
 
 func Register(r *gin.Engine, db *sql.DB, hub *ws.Hub, firebaseAuth *firebaseauth.Client) {
-	authHandler := handlers.NewAuthHandler(db)
+	authHandler := handlers.NewAuthHandler(db, firebaseAuth)
 	friendsHandler := handlers.NewFriendsHandler(db)
 	requestsHandler := handlers.NewRequestsHandler(db)
 
@@ -21,30 +21,33 @@ func Register(r *gin.Engine, db *sql.DB, hub *ws.Hub, firebaseAuth *firebaseauth
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
-	// WebSocket endpoint (auth via query param token for WS handshake)
+	// WebSocket endpoint — auth via query param token during WS handshake
 	r.GET("/ws", func(c *gin.Context) {
 		uid := c.Query("uid")
 		// TODO: verify token from query param before upgrading
 		hub.ServeWS(uid, c.Writer, c.Request)
 	})
 
-	api := r.Group("/api/v1")
-	api.Use(middleware.AuthRequired(firebaseAuth))
+	// Public routes — no auth middleware
+	api := r.Group("/api")
 	{
-		// Auth
-		api.POST("/auth/register", authHandler.Register)
-		api.GET("/auth/me", authHandler.Me)
+		api.POST("/auth/login", authHandler.Login)
+	}
 
+	// Protected routes — Firebase token required
+	v1 := r.Group("/api/v1")
+	v1.Use(middleware.AuthRequired(firebaseAuth))
+	{
 		// Friends
-		api.POST("/friends/request", friendsHandler.SendRequest)
-		api.PUT("/friends/request/:id", friendsHandler.RespondRequest)
-		api.GET("/friends", friendsHandler.List)
+		v1.POST("/friends/request", friendsHandler.SendRequest)
+		v1.PUT("/friends/request/:id", friendsHandler.RespondRequest)
+		v1.GET("/friends", friendsHandler.List)
 
 		// Pick requests
-		api.POST("/requests", requestsHandler.Create)
-		api.PUT("/requests/:id/accept", requestsHandler.Accept)
-		api.PUT("/requests/:id/complete", requestsHandler.Complete)
-		api.PUT("/requests/:id/cancel", requestsHandler.Cancel)
-		api.GET("/requests", requestsHandler.List)
+		v1.POST("/requests", requestsHandler.Create)
+		v1.PUT("/requests/:id/accept", requestsHandler.Accept)
+		v1.PUT("/requests/:id/complete", requestsHandler.Complete)
+		v1.PUT("/requests/:id/cancel", requestsHandler.Cancel)
+		v1.GET("/requests", requestsHandler.List)
 	}
 }

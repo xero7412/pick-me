@@ -1,32 +1,45 @@
 package models
 
-import "time"
+import (
+	"database/sql"
+	"time"
+)
 
 type User struct {
-	ID          string    `json:"id" db:"id"`
-	FirebaseUID string    `json:"firebase_uid" db:"firebase_uid"`
-	DisplayName string    `json:"display_name" db:"display_name"`
-	PhoneNumber string    `json:"phone_number" db:"phone_number"`
-	CreatedAt   time.Time `json:"created_at" db:"created_at"`
+	ID        string         `json:"id"`
+	GoogleID  string         `json:"google_id"`
+	Name      string         `json:"name"`
+	Email     string         `json:"email"`
+	AvatarURL sql.NullString `json:"avatar_url"`
+	CreatedAt time.Time      `json:"created_at"`
 }
 
 type Friendship struct {
-	ID         string    `json:"id" db:"id"`
-	RequesterID string   `json:"requester_id" db:"requester_id"`
-	AddresseeID string   `json:"addressee_id" db:"addressee_id"`
-	Status     string    `json:"status" db:"status"` // pending, accepted, rejected
-	CreatedAt  time.Time `json:"created_at" db:"created_at"`
+	ID          string    `json:"id"`
+	RequesterID string    `json:"requester_id"`
+	ReceiverID  string    `json:"receiver_id"`
+	Status      string    `json:"status"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
-type PickRequest struct {
-	ID          string    `json:"id" db:"id"`
-	RequesterID string    `json:"requester_id" db:"requester_id"`
-	DriverID    string    `json:"driver_id" db:"driver_id"`
-	PickupLat   float64   `json:"pickup_lat" db:"pickup_lat"`
-	PickupLng   float64   `json:"pickup_lng" db:"pickup_lng"`
-	DropLat     float64   `json:"drop_lat" db:"drop_lat"`
-	DropLng     float64   `json:"drop_lng" db:"drop_lng"`
-	Status      string    `json:"status" db:"status"` // pending, accepted, completed, cancelled
-	CreatedAt   time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
+type PickupRequest struct {
+	ID           string         `json:"id"`
+	RequesterID  string         `json:"requester_id"`
+	ReceiverID   string         `json:"receiver_id"`
+	Status       string         `json:"status"`
+	RequesterLat float64        `json:"requester_lat"`
+	RequesterLng float64        `json:"requester_lng"`
+	CreatedAt    time.Time      `json:"created_at"`
+	RespondedAt  sql.NullTime   `json:"responded_at"`
+	CompletedAt  sql.NullTime   `json:"completed_at"`
+}
+
+type Notification struct {
+	ID        string         `json:"id"`
+	UserID    string         `json:"user_id"`
+	Type      string         `json:"type"`
+	Payload   []byte         `json:"payload"`
+	IsRead    bool           `json:"is_read"`
+	CreatedAt time.Time      `json:"created_at"`
 }
