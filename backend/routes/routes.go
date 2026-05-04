@@ -17,16 +17,10 @@ func Register(r *gin.Engine, db *sql.DB, rdb *redis.Client, hub *ws.Hub, firebas
 	authHandler := handlers.NewAuthHandler(db, firebaseAuth)
 	friendsHandler := handlers.NewFriendsHandler(db)
 	requestsHandler := handlers.NewRequestsHandler(db, rdb)
+	wsHandler := handlers.NewWebSocketHandler(db, hub)
 
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
-	})
-
-	// WebSocket endpoint — auth via query param token during WS handshake
-	r.GET("/ws", func(c *gin.Context) {
-		uid := c.Query("uid")
-		// TODO: verify token from query param before upgrading
-		hub.ServeWS(uid, c.Writer, c.Request)
 	})
 
 	// Public routes — no auth middleware
@@ -50,5 +44,8 @@ func Register(r *gin.Engine, db *sql.DB, rdb *redis.Client, hub *ws.Hub, firebas
 		v1.POST("/requests/respond", requestsHandler.Respond)
 		v1.POST("/requests/complete", requestsHandler.Complete)
 		v1.GET("/requests/active", requestsHandler.Active)
+
+		// WebSocket — live location sharing
+		v1.GET("/ws/connect", wsHandler.ConnectToRoom)
 	}
 }

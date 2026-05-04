@@ -24,6 +24,7 @@ func main() {
 	fbClient := firebase.Init(cfg.FirebaseCredentialsPath)
 
 	hub := ws.NewHub()
+	go hub.Run()
 
 	r := gin.Default()
 	routes.Register(r, database, rdb, hub, fbClient.Auth)
