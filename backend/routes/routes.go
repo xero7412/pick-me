@@ -6,16 +6,17 @@ import (
 
 	firebaseauth "firebase.google.com/go/v4/auth"
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 
 	"github.com/xero7412/pick-me/backend/handlers"
 	"github.com/xero7412/pick-me/backend/middleware"
 	ws "github.com/xero7412/pick-me/backend/websocket"
 )
 
-func Register(r *gin.Engine, db *sql.DB, hub *ws.Hub, firebaseAuth *firebaseauth.Client) {
+func Register(r *gin.Engine, db *sql.DB, rdb *redis.Client, hub *ws.Hub, firebaseAuth *firebaseauth.Client) {
 	authHandler := handlers.NewAuthHandler(db, firebaseAuth)
 	friendsHandler := handlers.NewFriendsHandler(db)
-	requestsHandler := handlers.NewRequestsHandler(db)
+	requestsHandler := handlers.NewRequestsHandler(db, rdb)
 
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
@@ -44,11 +45,10 @@ func Register(r *gin.Engine, db *sql.DB, hub *ws.Hub, firebaseAuth *firebaseauth
 		v1.GET("/friends", friendsHandler.List)
 		v1.GET("/friends/pending", friendsHandler.Pending)
 
-		// Pick requests
-		v1.POST("/requests", requestsHandler.Create)
-		v1.PUT("/requests/:id/accept", requestsHandler.Accept)
-		v1.PUT("/requests/:id/complete", requestsHandler.Complete)
-		v1.PUT("/requests/:id/cancel", requestsHandler.Cancel)
-		v1.GET("/requests", requestsHandler.List)
+		// Pick-up requests
+		v1.POST("/requests/send", requestsHandler.Send)
+		v1.POST("/requests/respond", requestsHandler.Respond)
+		v1.POST("/requests/complete", requestsHandler.Complete)
+		v1.GET("/requests/active", requestsHandler.Active)
 	}
 }

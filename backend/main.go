@@ -19,14 +19,14 @@ func main() {
 	database := db.Connect(cfg.DatabaseURL)
 	defer database.Close()
 
-	_ = redisclient.Connect(cfg.RedisURL)
+	rdb := redisclient.Connect(cfg.RedisURL)
 
 	fbClient := firebase.Init(cfg.FirebaseCredentialsPath)
 
 	hub := ws.NewHub()
 
 	r := gin.Default()
-	routes.Register(r, database, hub, fbClient.Auth)
+	routes.Register(r, database, rdb, hub, fbClient.Auth)
 
 	log.Printf("starting Pick Me server on :%s", cfg.Port)
 	if err := r.Run(":" + cfg.Port); err != nil {
