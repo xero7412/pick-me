@@ -10,6 +10,13 @@ import (
 
 func AuthRequired(firebaseAuth *auth.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Bypass auth when Firebase is not configured (local dev only).
+		if firebaseAuth == nil {
+			c.Set("uid", "dev-uid")
+			c.Next()
+			return
+		}
+
 		header := c.GetHeader("Authorization")
 		if !strings.HasPrefix(header, "Bearer ") {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "missing bearer token"})

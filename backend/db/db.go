@@ -18,5 +18,7 @@ func Connect(databaseURL string) *sql.DB {
 	}
 
 	log.Println("connected to PostgreSQL")
+
+	RunMigrations(db)
 	return db
 }

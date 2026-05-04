@@ -14,6 +14,11 @@ type Client struct {
 }
 
 func Init(credentialsPath string) *Client {
+	if credentialsPath == "" || credentialsPath == "/path/to/firebase-service-account.json" {
+		log.Println("WARNING: Firebase credentials not configured — auth middleware disabled")
+		return &Client{}
+	}
+
 	opts := option.WithCredentialsFile(credentialsPath)
 	app, err := firebase.NewApp(context.Background(), nil, opts)
 	if err != nil {
